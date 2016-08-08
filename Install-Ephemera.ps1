@@ -63,8 +63,11 @@ if($apiID -ne 'placeholder'){
     }
 }
 
+# Get AWS Region
+$AWSRegion = Invoke-Terraform -action 'output' -TerraformArgs 'aws_region' -TerraformConfigPath $TerraformConfigPath
+
 Write-Verbose "Execute the swagger importer to create the api gateway"
-$swaggerImporterOutput = Invoke-AWSSwaggerImporter -action 'create' -swaggerImporterPath $swaggerImporterPath -swaggerSpecificationPath $PSScriptRoot\output\ephemera-swagger-spec.json
+$swaggerImporterOutput = Invoke-AWSSwaggerImporter -action 'create' -swaggerImporterPath $swaggerImporterPath -swaggerSpecificationPath $PSScriptRoot\output\ephemera-swagger-spec.json -region $AWSRegion
 
 Write-Verbose "Extract the api ID and add it to the global terraform vars"
 $swaggerImporterOutput | %{$_ -match "api id \w{10,10}"} | Out-Null
@@ -72,9 +75,6 @@ $apiID = $matches[$matches.length-1] -replace 'api id ',''
 $script:terraformVars += "-var 'api_gateway_id=$apiID'"
 
 Write-Verbose "Update Terraform with the API ID"
-
-# Get AWS Region
-$AWSRegion = Invoke-Terraform -action 'output' -TerraformArgs 'aws_region' -TerraformConfigPath $TerraformConfigPath
 
 # Filter out existing values which will replace and rewrite the config file
 $(Get-Content "$TerraformConfigPath\terraform.tfvars" | Where-Object {$_ -notmatch 'api_gateway_id' -and $_ -notmatch "api_url"}) | Set-Content "$TerraformConfigPath\terraform.tfvars"

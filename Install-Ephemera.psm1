@@ -46,10 +46,10 @@ function ConvertFrom-StreamToString{
 function ZipFiles
 {
     param( $zipfilename, $sourcedir )
-    Add-Type -Assembly System.IO.Compression.FileSystem 
+    Add-Type -Assembly System.IO.Compression.FileSystem
     $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
     [System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir,
-        $zipfilename, $compressionLevel, $true) 
+        $zipfilename, $compressionLevel, $true)
 }
 
 function Get-Base64KMSEncryptedString{
@@ -74,12 +74,12 @@ function Invoke-Terraform{
         [Parameter(Mandatory=$false)]
         [string[]]$TerraformArgs=''
     )
-    
+
     # Unset Terraform logging level so we can capture our outputs
     $env:TF_LOG = ''
 
     Push-Location $TerraformConfigPath
-    
+
     switch($action){
         "apply" {
             $result = Invoke-Expression -Command "terraform apply $($TerraformArgs -join ' ')" -ErrorAction Stop
@@ -91,7 +91,7 @@ function Invoke-Terraform{
             $result = Invoke-Expression -Command "terraform taint $($TerraformArgs -join ' ')" -ErrorAction Stop
         }
     }
-    
+
     Pop-Location
 
     if($LASTEXITCODE -ne 0){throw "Error executing terraform"}
@@ -105,11 +105,13 @@ function Invoke-AWSSwaggerImporter{
         [Parameter(Mandatory=$true)]
         [string]$swaggerSpecificationPath,
         [Parameter(Mandatory=$true)]
-        [string]$action
+        [string]$action,
+        [Parameter(Mandatory=$true)]
+        [string]$region
     )
     switch($action){
         "create" {
-            $result = Invoke-Expression "$swaggerImporterPath\aws-api-import.cmd -c $swaggerSpecificationPath" -ErrorAction Stop
+            $result = Invoke-Expression "$swaggerImporterPath\aws-api-import.cmd -c $swaggerSpecificationPath --region $region" -ErrorAction Stop
         }
     }
     if($LASTEXITCODE -ne 0){throw "Error executing AWS Swagger importer`r`n$result"}
